@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title></title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<p>#Reproducible Research Assessment by Punit Kapoor</p>
+
+<p>#Step-1 : Loading and preprocessing the data
+unzip(&ldquo;activity.zip&rdquo;)
+walkData &lt;- read.csv(&ldquo;activity.csv&rdquo;)</p>
+
+<p>#Step-2 : What is mean total number of steps taken per day?
+#2.1 - Calculate the total number of steps taken per day
+totalStepsTaken &lt;- aggregate(steps~date, data=walkData, sum, na.rm=TRUE)</p>
+
+<p>#2.2 - Make a histogram of the total number of steps taken each day
+hist(totalStepsTaken$steps, 
+     main=&ldquo;Mean total steps taken per day&rdquo;, 
+     xlab=&ldquo;Steps&rdquo;, 
+     ylab=&ldquo;Number of Days&rdquo;, 
+     ylim=c(0,35),
+     col=&ldquo;blue&rdquo;)</p>
+
+<p>#2.3 - Calculate and report the mean and median of the total number of steps taken per day
+meanStepsTaken &lt;- mean(totalStepsTaken$steps)
+medianStepsTaken &lt;- median(totalStepsTaken$steps)</p>
+
+<p>#Step-3 : What is the average daily activity pattern?
+#3.1 - Make a time series plot 
+stepsToInterval &lt;- aggregate(steps~interval, data=walkData, mean, na.rm=TRUE)
+plot(steps~interval,data=stepsToInterval,type=&ldquo;l&rdquo;)</p>
+
+<p>#3.2 - Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+max5Minute &lt;- stepsToInterval[which.max(stepsToInterval$steps),]$interval</p>
+
+<p>#Step-4 : Imputing missing values
+#4.1 : Calculating and reporting the total number of missing values in the dataset
+totalMissingValues &lt;- sum(is.na(walkData$steps))</p>
+
+<p>##4.2 : Devising a strategy for filling in all of the missing values in the dataset
+allTimeSlotsValues &lt;- unique(walkData$interval)</p>
+
+<p>#4.3 : Creating a new dataset that is equal to the original dataset but with the missing data filled in
+newData &lt;- walkData
+setMissingDataValues &lt;- function(timeSlot) {
+  newData[which(walkData$interval==timeSlot &amp; is.na(walkData$steps)), ]$steps &lt;&lt;- 
+    mean(walkData[which(walkData$interval==timeSlot &amp; !is.na(walkData$steps)), ]$steps)
+}</p>
+
+<p>lapply(allTimeSlotsValues, setMissingDataValues)</p>
+
+<p>#4.4 : Making a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day
+totalNewStepsTaken &lt;- aggregate(steps~date, data=newData, sum, na.rm=TRUE)
+hist(totalNewStepsTaken$steps, 
+     main=&ldquo;Mean total steps taken per day (with NA values imputed)&rdquo;, 
+     xlab=&ldquo;Steps&rdquo;, 
+     ylab=&ldquo;Number of Days&rdquo;, 
+     ylim=c(0,35),
+     col=&ldquo;green&rdquo;)</p>
+
+<p>meanNewStepsTaken &lt;- mean(totalNewStepsTaken$steps)
+medianNewStepsTaken &lt;- median(totalNewStepsTaken$steps)</p>
+
+<p>#Step-5 : Are there differences in activity patterns between weekdays and weekends?
+#5.1 - Creating a new factor column with the Weekday or Weekend identifier
+newData$type_of_day &lt;- weekdays(as.Date(newData$date))
+newData$type_of_day[newData$type_of_day %in% c(&#39;Saturday&#39;,&#39;Sunday&#39;)] &lt;-&ldquo;Weekend&rdquo;
+newData$type_of_day[newData$type_of_day != &ldquo;Weekend&rdquo;] &lt;-&ldquo;Weekday&rdquo;
+newData$type_of_day &lt;- as.factor(newData$type_of_day)</p>
+
+<p>Weekday_data &lt;- subset(newData, type_of_day==&ldquo;Weekday&rdquo;)
+Weekday_stepsToInterval &lt;- aggregate(steps~interval, data=Weekday_data, mean)</p>
+
+<p>Weekend_data &lt;- subset(newData, type_of_day==&ldquo;Weekend&rdquo;)
+Weekend_stepsToInterval &lt;- aggregate(steps~interval, data=Weekend_data, mean)</p>
+
+<p>#5.2 - Make a panel plot containing a time series plot
+par(mfrow=c(2,1), mar=c(4,4,2,1), oma=c(0,0,2,0))</p>
+
+<p>with(newData, {
+  plot(steps~interval,data=Weekday_stepsToInterval,type=&ldquo;l&rdquo;,
+       main=&ldquo;Steps for Weekdays&rdquo;, xlab=&ldquo;Time Interval&rdquo;, col=&ldquo;red&rdquo;)
+  plot(steps~interval,data=Weekend_stepsToInterval,type=&ldquo;l&rdquo;,
+       main=&ldquo;Steps for Weekends&rdquo;, xlab=&ldquo;Time Interval&rdquo;, col=&ldquo;red&rdquo;)
+})</p>
+
+</body>
+
+</html>
